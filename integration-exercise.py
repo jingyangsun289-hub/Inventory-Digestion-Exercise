@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-Inventory Data Extraction and Transformation
-"""
+" Inventory Data Extraction and Transformation "
+
 
 import csv
 import json
@@ -23,7 +22,7 @@ class InventoryProcessor:
         self.itemnum_counts = defaultdict(int)
 
     def download_from_s3(self, bucket: str, key: str) -> str:
-        """Download content from S3 bucket"""
+        
         try:
             response = self.s3_client.get_object(Bucket=bucket, Key=key)
             content = response['Body'].read().decode('utf-8')
@@ -33,7 +32,6 @@ class InventoryProcessor:
             sys.exit(1)
 
     def parse_csv_content(self, content: str) -> List[Dict[str, Any]]:
-        """Parse CSV content directly from string"""
         csv_file = StringIO(content)
         reader = csv.DictReader(csv_file)
         records = list(reader)
@@ -50,7 +48,6 @@ class InventoryProcessor:
         return records
 
     def calculate_new_price(self, cost: float, price: float) -> float:
-        """Calculate new price based on margin rules"""
         if cost == 0:
             margin = 0
         else:
@@ -65,14 +62,12 @@ class InventoryProcessor:
         return round(new_price, 2)
 
     def process_upc_or_internal_id(self, upc: str, record_id: str) -> tuple:
-        """Process UPC column and determine if internal_id is needed"""
         if upc and upc.isdigit() and len(upc) > 5:
             return upc, None
         else:
             return None, f"biz_id_{record_id}"
 
     def get_tags(self, margin: float, is_duplicate_sku: bool) -> List[str]:
-        """Generate tags for the record"""
         tags = []
         if is_duplicate_sku:
             tags.append("duplicate_sku")
@@ -83,7 +78,6 @@ class InventoryProcessor:
         return tags
 
     def transform_record(self, record: Dict[str, str], index: int) -> Optional[Dict[str, Any]]:
-        """Transform a single record according to requirements"""
         try:
             cost = float(record.get('Cost', 0))
             price = float(record.get('Price', 0))
@@ -141,7 +135,6 @@ class InventoryProcessor:
             return None
 
     def process_and_transform(self, content: str) -> List[Dict[str, Any]]:
-        """Main processing pipeline"""
         records = self.parse_csv_content(content)
         transformed_records = []
         
@@ -153,7 +146,6 @@ class InventoryProcessor:
         return transformed_records
 
     def save_to_csv(self, records: List[Dict[str, Any]], output_file: str):
-        """Save transformed records to CSV file - ONLY the required fields"""
         if not records:
             print("No records to save", file=sys.stderr)
             return
