@@ -1,0 +1,5 @@
+upc,internal_id,price,name,department,properties,tags,quantity
+12345678901,,16.05,Widget Deluxe,Hardware,"{""department"": ""Hardware"", ""vendor"": ""ACME"", ""description"": ""Blue widget""}","duplicate_sku,high_margin",100
+,biz_id_1,37.45,Gadget Basic,Electronics,"{""department"": ""Electronics"", ""vendor"": ""TechCorp"", ""description"": ""Red gadget""}",high_margin,50
+12345678902,,19.26,Widget Basic,Hardware,"{""department"": ""Hardware"", ""vendor"": ""ACME"", ""description"": ""Red widget""}",high_margin,200
+12345678901,,16.05,Widget Deluxe,Hardware,"{""department"": ""Hardware"", ""vendor"": ""ACME"", ""description"": ""Blue widget""}","duplicate_sku,high_margin",30

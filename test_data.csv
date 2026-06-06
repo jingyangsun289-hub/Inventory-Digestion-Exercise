@@ -1,0 +1,6 @@
+ItemNum,Item,ItemExtra,Department,Vendor,Description,UPC,Cost,Price,Quantity,SaleDate
+1001,Widget,Deluxe,Hardware,ACME,Blue widget,12345678901,10.00,15.00,100,2020-06-15
+1002,Gadget,Basic,Electronics,TechCorp,Red gadget,abc123,20.00,35.00,50,2020-08-20
+1003,Tool,Pro,Hardware,ACME,Green tool,987654321,5.00,8.00,75,2019-12-01
+1004,Widget,Basic,Hardware,ACME,Red widget,12345678902,10.00,18.00,200,2020-10-10
+1001,Widget,Deluxe,Hardware,ACME,Blue widget,12345678901,10.00,15.00,30,2020-11-05
