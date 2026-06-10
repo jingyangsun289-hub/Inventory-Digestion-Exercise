@@ -1,29 +1,13 @@
-1.cd ~/Desktop/city-hive-assignment/inventory-processor
+Part 1: Locally
+cd ~/Desktop/city-hive-assignment/inventory-processor
+source venv/bin/activate
+python integration-exercise.py generate_csv --input-file test_data.csv --output-file demo.csv
+cat demo.csv
 
-2.source venv/bin/activate
+Part 2: From S3
+python integration-exercise.py generate_csv --s3-bucket city-hive-justin-2024 --s3-key inventory_data.csv --output-file s3_demo.csv
+cat s3_demo.csv
 
-3.cat > test.html << 'EOF'
-<!DOCTYPE html>
-<html>
-  <body>
-    <div id="bucket-value">cityhive-stores</div>
-    <div id="region-value" data-region="us-west-2">US West (Oregon)</div>
-    <div id="object-value"><span class="path">_utils</span><span class="path">inventory_export_sample_exercise.csv</span></div>
-  </body>
-</html>
-EOF
+Part 3: HTML
+python s3_html_parser.py
 
-4.python3 -c "
-from bs4 import BeautifulSoup
-with open('test.html', 'r') as f:
-    soup = BeautifulSoup(f.read(), 'html.parser')
-    print('Bucket:', soup.find('div', id='bucket-value').text.strip())
-    print('Region:', soup.find('div', id='region-value')['data-region'])
-    path_spans = soup.select('#object-value .path')
-    path = ''.join(span.text for span in path_spans)
-    print('Path:', path)
-"
-
-5.python3 integration-exercise.py generate_csv --s3-bucket city-hive-justin-2024 --s3-key inventory_data.csv --output-file demo_output.csv
-
-6.cat demo_output.csv
