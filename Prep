@@ -1,16 +1,8 @@
-# Interview Demo Script - City Hive
+1.cd ~/Desktop/city-hive-assignment/inventory-processor
 
-## Pre-Demo Setup (Do this before the interview)
+2.source venv/bin/activate
 
-```bash
-# Open terminal
-cd ~/Desktop/city-hive-assignment/inventory-processor
-
-# Activate virtual environment
-source venv/bin/activate
-
-# Make sure test.html exists (HTML parsing demo)
-cat > test.html << 'EOF'
+3.cat > test.html << 'EOF'
 <!DOCTYPE html>
 <html>
   <body>
@@ -20,3 +12,18 @@ cat > test.html << 'EOF'
   </body>
 </html>
 EOF
+
+4.python3 -c "
+from bs4 import BeautifulSoup
+with open('test.html', 'r') as f:
+    soup = BeautifulSoup(f.read(), 'html.parser')
+    print('Bucket:', soup.find('div', id='bucket-value').text.strip())
+    print('Region:', soup.find('div', id='region-value')['data-region'])
+    path_spans = soup.select('#object-value .path')
+    path = ''.join(span.text for span in path_spans)
+    print('Path:', path)
+"
+
+5.python3 integration-exercise.py generate_csv --s3-bucket city-hive-justin-2024 --s3-key inventory_data.csv --output-file demo_output.csv
+
+6.cat demo_output.csv
