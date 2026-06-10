@@ -1,0 +1,22 @@
+# Interview Demo Script - City Hive
+
+## Pre-Demo Setup (Do this before the interview)
+
+```bash
+# Open terminal
+cd ~/Desktop/city-hive-assignment/inventory-processor
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Make sure test.html exists (HTML parsing demo)
+cat > test.html << 'EOF'
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="bucket-value">cityhive-stores</div>
+    <div id="region-value" data-region="us-west-2">US West (Oregon)</div>
+    <div id="object-value"><span class="path">_utils</span><span class="path">inventory_export_sample_exercise.csv</span></div>
+  </body>
+</html>
+EOF
