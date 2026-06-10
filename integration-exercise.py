@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-" Inventory Data Extraction and Transformation "
-
 
 import csv
 import json
@@ -13,6 +11,9 @@ from collections import defaultdict
 from typing import List, Dict, Any, Optional
 import boto3
 from botocore.exceptions import ClientError
+from bs4 import BeautifulSoup
+
+INITIAL_HTML_URL = "https://bitbucket.org/cityhive/jobs/src/master/integration-eng/integration-entryfile.html"
 
 
 class InventoryProcessor:
@@ -21,11 +22,42 @@ class InventoryProcessor:
         self.duplicate_skus = set()
         self.itemnum_counts = defaultdict(int)
 
-    def download_from_s3(self, bucket: str, key: str) -> str:
-        
+    def get_s3_details_from_html(self, html_url: str) -> tuple:
         try:
-            response = self.s3_client.get_object(Bucket=bucket, Key=key)
+            response = requests.get(html_url)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            bucket_div = soup.find('div', id='bucket-value')
+            bucket = bucket_div.text.strip() if bucket_div else None
+            
+            region_div = soup.find('div', id='region-value')
+            region = region_div.get('data-region') if region_div else None
+            
+            path_spans = soup.select('#object-value .path')
+            object_path = ''.join(span.text for span in path_spans) if path_spans else None
+            
+            if not all([bucket, region, object_path]):
+                raise Exception("Could not extract S3 details from HTML")
+            
+            print(f"Found S3 details - Bucket: {bucket}, Region: {region}, Path: {object_path}")
+            return bucket, region, object_path
+            
+        except Exception as e:
+            print(f"Error parsing HTML: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    def download_from_s3(self, bucket: str, key: str, region: str = None) -> str:
+        try:
+            if region:
+                s3_client = boto3.client('s3', region_name=region)
+            else:
+                s3_client = self.s3_client
+                
+            response = s3_client.get_object(Bucket=bucket, Key=key)
             content = response['Body'].read().decode('utf-8')
+            print(f"Successfully downloaded from S3: {bucket}/{key}")
             return content
         except ClientError as e:
             print(f"Error downloading from S3: {e}", file=sys.stderr)
@@ -150,7 +182,6 @@ class InventoryProcessor:
             print("No records to save", file=sys.stderr)
             return
         
-        # These are the ONLY columns that should be in the output CSV
         fieldnames = ['upc', 'internal_id', 'price', 'name', 'department', 
                      'properties', 'tags', 'quantity']
         
@@ -159,7 +190,6 @@ class InventoryProcessor:
             writer.writeheader()
             
             for record in records:
-                # Create a new dict with ONLY the fields we want in CSV
                 row = {
                     'upc': record.get('upc', ''),
                     'internal_id': record.get('internal_id', ''),
@@ -181,7 +211,6 @@ class InventoryAPIClient:
         self.session = requests.Session()
 
     def upload_inventory(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Upload inventory records to API"""
         payload = {"inventory_units": records}
         
         try:
@@ -196,7 +225,6 @@ class InventoryAPIClient:
             sys.exit(1)
 
     def list_uploads(self) -> List[Dict[str, Any]]:
-        """List all inventory upload batches"""
         try:
             response = self.session.get(f"{self.api_url}/inventory_uploads.json")
             response.raise_for_status()
@@ -212,8 +240,8 @@ def main():
     parser.add_argument('--input-file', help='Input CSV file path')
     parser.add_argument('--output-file', default='inventory_output.csv')
     parser.add_argument('--api-url', default='http://localhost:3000')
-    parser.add_argument('--s3-bucket', default='your-inventory-bucket')
-    parser.add_argument('--s3-key', default='inventory_data.csv')
+    parser.add_argument('--s3-bucket', help='S3 bucket name (optional - will auto-discover from HTML if not provided)')
+    parser.add_argument('--s3-key', help='S3 object key (optional - will auto-discover from HTML if not provided)')
     
     args = parser.parse_args()
     
@@ -227,7 +255,8 @@ def main():
             transformed = processor.process_and_transform(content)
             processor.save_to_csv(transformed, args.output_file)
         else:
-            content = processor.download_from_s3(args.s3_bucket, args.s3_key)
+            bucket, region, key = processor.get_s3_details_from_html(INITIAL_HTML_URL)
+            content = processor.download_from_s3(bucket, key, region)
             transformed = processor.process_and_transform(content)
             processor.save_to_csv(transformed, args.output_file)
     
@@ -236,7 +265,8 @@ def main():
             with open(args.input_file, 'r', encoding='utf-8') as f:
                 content = f.read()
         else:
-            content = processor.download_from_s3(args.s3_bucket, args.s3_key)
+            bucket, region, key = processor.get_s3_details_from_html(INITIAL_HTML_URL)
+            content = processor.download_from_s3(bucket, key, region)
         
         transformed = processor.process_and_transform(content)
         result = api_client.upload_inventory(transformed)
